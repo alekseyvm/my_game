@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Своя Игра - Результаты</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <div class="logo">
+                <img src="images/fml366_200.png" alt="ФМЛ 366">
+                <h1>Своя Игра</h1>
+            </div>
+        </div>
+    </header>
+
+    <main class="dashboard-container">
+        <h2>Результаты игры</h2>
+
+        <!-- Таблица результатов -->
+        <div class="results-section">
+            <h3>Итоговая таблица</h3>
+            <table id="resultsTable" class="results-table">
+                <thead>
+                    <tr>
+                        <th>Место</th>
+                        <th>Игрок</th>
+                        <th>Баллы</th>
+                    </tr>
+                </thead>
+                <tbody id="resultsBody">
+                    <!-- Результаты будут добавлены динамически -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Статистика -->
+        <div class="stats-section">
+            <h3>Статистика игры</h3>
+            <div class="stats-grid" id="statsGrid">
+                <!-- Статистика будет добавлена динамически -->
+            </div>
+        </div>
+
+        <!-- Действия -->
+        <div class="dashboard-actions">
+            <button id="backToGame" class="btn btn-secondary">Вернуться к игре</button>
+            <button id="newGame" class="btn btn-primary">Новая игра</button>
+        </div>
+    </main>
+
+    <footer>
+        <p>Разработано для образовательных целей | 2025</p>
+    </footer>
+
+    <script src="js/data.js"></script>
+    <script>
+        // Загрузка состояния игры
+        const gameState = loadGameState();
+        
+        if (!gameState) {
+            window.location.href = 'index.html';
+        }
+
+        // Отображение результатов
+        function displayResults() {
+            const resultsBody = document.getElementById('resultsBody');
+            const sortedPlayers = [...gameState.players].sort((a, b) => b.score - a.score);
+
+            resultsBody.innerHTML = '';
+            sortedPlayers.forEach((player, index) => {
+                const row = document.createElement('tr');
+                row.className = index === 0 ? 'winner' : '';
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${player.name}</td>
+                    <td>${player.score}</td>
+                `;
+                resultsBody.appendChild(row);
+            });
+        }
+
+        // Отображение статистики
+        function displayStats() {
+            const statsGrid = document.getElementById('statsGrid');
+            const totalQuestions = gameState.answeredQuestions.length;
+            const totalPlayers = gameState.players.length;
+            const maxScore = Math.max(...gameState.players.map(p => p.score));
+            const minScore = Math.min(...gameState.players.map(p => p.score));
+
+            statsGrid.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-value">${totalQuestions}</div>
+                    <div class="stat-label">Отвеченных вопросов</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${totalPlayers}</div>
+                    <div class="stat-label">Игроков</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${maxScore}</div>
+                    <div class="stat-label">Максимальный счет</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${minScore}</div>
+                    <div class="stat-label">Минимальный счет</div>
+                </div>
+            `;
+        }
+
+        // Инициализация
+        displayResults();
+        displayStats();
+
+        // Обработчики кнопок
+        document.getElementById('backToGame').addEventListener('click', () => {
+            window.location.href = 'game.html';
+        });
+
+        document.getElementById('newGame').addEventListener('click', () => {
+            if (confirm('Начать новую игру? Текущий прогресс будет потерян.')) {
+                localStorage.removeItem('gameState');
+                window.location.href = 'index.html';
+            }
+        });
+    </script>
+</body>
+</html>

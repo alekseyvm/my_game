@@ -1,0 +1,275 @@
+/* Стили для игровой страницы */
+
+.game-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* Панель игроков */
+.players-panel {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.player-card {
+    background: var(--card-bg);
+    border-radius: 10px;
+    padding: 1rem;
+    box-shadow: var(--shadow);
+    text-align: center;
+    transition: all 0.3s;
+    border: 3px solid transparent;
+}
+
+.player-card.active {
+    border-color: var(--primary-color);
+    box-shadow: var(--shadow-lg);
+    transform: scale(1.03);
+}
+
+.player-card h3 {
+    font-size: 1.1rem;
+    margin-bottom: 0.4rem;
+    color: var(--text-primary);
+}
+
+.player-score {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+/* Игровое поле */
+.game-board {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 1.25rem;
+    box-shadow: var(--shadow-lg);
+}
+
+.category-column {
+    margin-bottom: 1rem;
+}
+
+.category-header {
+    background: linear-gradient(135deg, var(--primary-color) 0%, #1e40af 100%);
+    color: white;
+    padding: 0.75rem;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+}
+
+.questions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 0.75rem;
+}
+
+.question-cell {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    padding: 1.5rem 0.75rem;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 1.35rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s;
+    border: none;
+    box-shadow: var(--shadow);
+}
+
+.question-cell:hover:not(.answered) {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lg);
+    background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+}
+
+.question-cell.answered {
+    background: var(--secondary-color);
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+/* Модальное окно */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal.active {
+    display: flex;
+}
+
+.modal-content {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 1.5rem;
+    max-width: 750px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.question-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.question-header h3 {
+    font-size: 1.3rem;
+    color: var(--text-primary);
+}
+
+.points-badge {
+    background: var(--primary-color);
+    color: white;
+    padding: 0.4rem 0.9rem;
+    border-radius: 20px;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.question-image {
+    margin-bottom: 1.25rem;
+    text-align: center;
+}
+
+.question-image img {
+    max-width: 100%;
+    max-height: 350px;
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+}
+
+.question-text {
+    font-size: 1.3rem;
+    margin-bottom: 1.5rem;
+    color: var(--text-primary);
+    line-height: 1.6;
+    text-align: center;
+}
+
+.options-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.option-button {
+    padding: 1.1rem;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--card-bg);
+    cursor: pointer;
+    transition: all 0.3s;
+    font-size: 1rem;
+    text-align: left;
+}
+
+.option-button:hover:not(.correct):not(.incorrect) {
+    border-color: var(--primary-color);
+    background: #eff6ff;
+    transform: translateY(-2px);
+}
+
+.option-button.correct {
+    background: #d1fae5;
+    border-color: var(--success-color);
+    color: var(--success-color);
+    font-weight: 600;
+}
+
+.option-button.incorrect {
+    background: #fee2e2;
+    border-color: var(--danger-color);
+    color: var(--danger-color);
+    font-weight: 600;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+}
+
+/* Действия игры */
+.game-actions {
+    text-align: center;
+    margin-top: 1rem;
+}
+
+.game-actions .btn {
+    width: auto;
+    min-width: 220px;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .game-board {
+        padding: 1rem;
+    }
+
+    .questions-grid {
+        grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+        gap: 0.5rem;
+    }
+
+    .question-cell {
+        padding: 1.5rem 0.5rem;
+        font-size: 1.25rem;
+    }
+
+    .modal-content {
+        padding: 1.5rem;
+        width: 95%;
+    }
+
+    .question-text {
+        font-size: 1.25rem;
+    }
+
+    .options-container {
+        grid-template-columns: 1fr;
+    }
+
+    .option-button {
+        padding: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .players-panel {
+        grid-template-columns: 1fr;
+    }
+
+    .category-header {
+        font-size: 1rem;
+        padding: 0.75rem;
+    }
+
+    .question-cell {
+        padding: 1rem 0.5rem;
+        font-size: 1rem;
+    }
+}

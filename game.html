@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Своя Игра - Игра</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/game.css">
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <div class="logo">
+                <img src="images/fml366_200.png" alt="ФМЛ 366">
+                <h1>Своя Игра</h1>
+            </div>
+        </div>
+    </header>
+
+    <main class="game-container">
+        <!-- Панель игроков -->
+        <div class="players-panel" id="playersPanel">
+            <!-- Игроки будут добавлены динамически -->
+        </div>
+
+        <!-- Игровое поле -->
+        <div class="game-board" id="gameBoard">
+            <!-- Категории и вопросы будут добавлены динамически -->
+        </div>
+
+        <!-- Модальное окно с вопросом -->
+        <div id="questionModal" class="modal">
+            <div class="modal-content">
+                <div class="question-header">
+                    <h3 id="questionCategory"></h3>
+                    <span id="questionPoints" class="points-badge"></span>
+                </div>
+                <div id="questionImage" class="question-image"></div>
+                <p id="questionText" class="question-text"></p>
+                <div id="questionOptions" class="options-container">
+                    <!-- Варианты ответов будут добавлены динамически -->
+                </div>
+                <div class="modal-actions">
+                    <button id="closeModal" class="btn btn-secondary">Закрыть</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Кнопка перехода к дашборду -->
+        <div class="game-actions">
+            <button id="showDashboard" class="btn btn-primary">Показать результаты</button>
+        </div>
+    </main>
+
+    <footer>
+        <p>Разработано для образовательных целей | 2025</p>
+    </footer>
+
+    <script src="js/data.js"></script>
+    <script src="js/game.js"></script>
+    <script src="js/ui.js"></script>
+</body>
+</html>
