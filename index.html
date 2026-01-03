@@ -5,6 +5,68 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Своя Игра - Настройка</title>
     <link rel="stylesheet" href="css/main.css">
+    <style>
+        /* Исправление выравнивания радиокнопок */
+        .radio-option {
+            display: flex !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            justify-content: flex-start !important;
+            text-align: left !important;
+            width: 100%;
+            padding: 10px;
+            cursor: pointer;
+        }
+
+        .radio-option input[type="radio"] {
+            margin: 0 12px 0 0 !important;
+            flex-shrink: 0 !important;
+            width: 18px;
+            height: 18px;
+        }
+
+        .radio-option span {
+            margin: 0 !important;
+            display: inline-block !important;
+            text-align: left !important;
+            flex: 1;
+        }
+
+        /* Стилизация блока загрузки как на странице теста */
+        #fileUploadSection {
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 15px;
+            background-color: #fcfcfc;
+            text-align: center;
+        }
+
+        .file-input-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .uploaded-file-info {
+            margin-top: 10px;
+            padding: 10px;
+            background: #dcfce7;
+            border: 1px solid #bbf7d0;
+            border-radius: 6px;
+            color: #166534;
+            font-weight: bold;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+    </style>
 </head>
 <body>
     <header>
@@ -21,10 +83,34 @@
             <h2>Настройка игры</h2>
             
             <div class="form-group">
+                <div class="source-options">
+                    <div class="source-options-header">Источник вопросов</div>
+                    <label class="radio-option" for="useLocalBase">
+                        <input type="radio" name="questionSource" id="useLocalBase" value="local" checked>
+                        <span>Использовать локальную базу вопросов</span>
+                    </label>
+                    <label class="radio-option" for="useFileUpload">
+                        <input type="radio" name="questionSource" id="useFileUpload" value="file">
+                        <span>Загрузить файл с вопросами</span>
+                    </label>
+                </div>
+            </div>
+            
+            <div id="localBaseSection" class="form-group">
                 <label for="questionBase">База вопросов:</label>
                 <select id="questionBase" class="question-base-select">
                     <option value="" disabled selected>Загрузка...</option>
                 </select>
+            </div>
+            
+            <div id="fileUploadSection" class="form-group" style="display: none;">
+                <label>Загрузить файл с вопросами:</label>
+                <div class="file-input-container">
+                    <input type="file" id="fileInput" accept=".json">
+                    <button type="button" id="uploadFileBtn" class="btn btn-secondary">Выбрать JSON файл</button>
+                    <button type="button" id="clearUploadedBtn" class="btn btn-outline" style="display: none;">Очистить</button>
+                    <div id="uploadedFileInfo" class="uploaded-file-info"></div>
+                </div>
             </div>
             
             <div class="form-group">
@@ -50,32 +136,145 @@
         const playerNamesContainer = document.getElementById('playerNames');
         const startGameButton = document.getElementById('startGame');
         const questionBaseSelect = document.getElementById('questionBase');
+        const fileInput = document.getElementById('fileInput');
+        const uploadFileBtn = document.getElementById('uploadFileBtn');
+        const clearUploadedBtn = document.getElementById('clearUploadedBtn');
+        const uploadedFileInfo = document.getElementById('uploadedFileInfo');
+        const useLocalBaseRadio = document.getElementById('useLocalBase');
+        const useFileUploadRadio = document.getElementById('useFileUpload');
+        const localBaseSection = document.getElementById('localBaseSection');
+        const fileUploadSection = document.getElementById('fileUploadSection');
         
-        // Загрузка доступных баз вопросов
-        async function loadQuestionBases() {
-            const files = await getAvailableQuestionFiles();
-            questionBaseSelect.innerHTML = '';
-            
-            if (files.length === 0) {
-                const option = document.createElement('option');
-                option.value = '';
-                option.textContent = 'Базы вопросов не найдены';
-                questionBaseSelect.appendChild(option);
-                startGameButton.disabled = true;
-                return;
+        let uploadedQuestionsData = null;
+        let uploadedFileName = '';
+        
+        function toggleSourceMode() {
+            const useLocal = useLocalBaseRadio.checked;
+            if (useLocal) {
+                localBaseSection.style.display = 'block';
+                fileUploadSection.style.display = 'none';
+                clearUploadedFile();
+            } else {
+                localBaseSection.style.display = 'none';
+                fileUploadSection.style.display = 'block';
+                questionBaseSelect.selectedIndex = -1;
             }
-            
-            files.forEach(file => {
-                const option = document.createElement('option');
-                option.value = file.path;
-                option.textContent = file.subject;
-                questionBaseSelect.appendChild(option);
-            });
-            
-            startGameButton.disabled = false;
+            validateForm();
         }
         
-        // Генерация полей для имен игроков
+        function clearUploadedFile() {
+            uploadedQuestionsData = null;
+            uploadedFileName = '';
+            fileInput.value = '';
+            clearUploadedBtn.style.display = 'none';
+            uploadedFileInfo.style.display = 'none';
+            uploadedFileInfo.textContent = '';
+        }
+        
+        function validateForm() {
+            const useLocal = useLocalBaseRadio.checked;
+            let isValid = true;
+            if (useLocal) {
+                isValid = questionBaseSelect.value !== '';
+            } else {
+                isValid = uploadedQuestionsData !== null;
+            }
+            startGameButton.disabled = !isValid;
+        }
+
+        // Загрузка баз вопросов - улучшенная версия с обработкой ошибок
+        async function loadQuestionBases() {
+            try {
+                // Сначала пробуем получить список файлов через стандартную функцию
+                let files = await getAvailableQuestionFiles();
+                
+                // Если стандартный способ не сработал (пустой массив), пробуем напрямую
+                if (!files || files.length === 0) {
+                    try {
+                        const response = await fetch('data/questions.json');
+                        if (response.ok) {
+                            const config = await response.json();
+                            if (config.bases && Array.isArray(config.bases)) {
+                                files = config.bases.map(base => ({
+                                    name: base.file,
+                                    path: `data/${base.file}`,
+                                    subject: base.name
+                                }));
+                            }
+                        }
+                    } catch (e) {
+                        console.warn('Не удалось загрузить questions.json:', e);
+                        // Используем резервный список на основе структуры проекта
+                        files = [
+                            // { name: 'history1.json', path: 'data/history1.json', subject: 'История' },
+                            // { name: 'math1.json', path: 'data/math1.json', subject: 'Математика' }
+                        ];
+                    }
+                }
+                
+                questionBaseSelect.innerHTML = '';
+                
+                if (!files || files.length === 0) {
+                    const option = document.createElement('option');
+                    option.value = '';
+                    option.textContent = 'Базы вопросов не найдены';
+                    questionBaseSelect.appendChild(option);
+                    return;
+                }
+                
+                files.forEach(file => {
+                    const option = document.createElement('option');
+                    option.value = file.path;
+                    option.textContent = file.subject || file.name;
+                    questionBaseSelect.appendChild(option);
+                });
+                validateForm();
+            } catch (e) {
+                console.error('Критическая ошибка загрузки баз вопросов:', e);
+                questionBaseSelect.innerHTML = '<option value="">Ошибка загрузки</option>';
+            }
+        }
+        
+        uploadFileBtn.addEventListener('click', () => fileInput.click());
+        
+        fileInput.addEventListener('change', async (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            try {
+                const text = await file.text();
+                const data = JSON.parse(text);
+                
+                // Валидация структуры загруженного файла
+                if (!data.categories || !Array.isArray(data.categories) || data.categories.length === 0) {
+                    alert('Некорректный формат файла вопросов. Отсутствуют категории.');
+                    clearUploadedFile();
+                    return;
+                }
+                
+                uploadedQuestionsData = data;
+                uploadedFileName = file.name;
+                
+                clearUploadedBtn.style.display = 'inline-block';
+                uploadedFileInfo.style.display = 'flex';
+                uploadedFileInfo.textContent = `✅ ${file.name} (${data.subject || 'Загруженная база'})`;
+                
+                validateForm();
+            } catch (error) {
+                console.error('Ошибка загрузки файла:', error);
+                alert('Ошибка при чтении JSON файла. Убедитесь, что файл содержит корректный JSON.');
+                clearUploadedFile();
+            }
+        });
+        
+        clearUploadedBtn.addEventListener('click', () => {
+            clearUploadedFile();
+            validateForm();
+        });
+        
+        useLocalBaseRadio.addEventListener('change', toggleSourceMode);
+        useFileUploadRadio.addEventListener('change', toggleSourceMode);
+        
         function generatePlayerInputs(count) {
             playerNamesContainer.innerHTML = '';
             for (let i = 1; i <= count; i++) {
@@ -89,58 +288,60 @@
             }
         }
 
-        // Инициализация
         generatePlayerInputs(2);
         loadQuestionBases();
+        toggleSourceMode();
 
-        // Обработчик изменения количества игроков
         playerCountInput.addEventListener('change', (e) => {
             const count = parseInt(e.target.value);
             if (count >= 2 && count <= 6) {
                 generatePlayerInputs(count);
             }
         });
+        
+        questionBaseSelect.addEventListener('change', validateForm);
 
-        // Начало игры
         startGameButton.addEventListener('click', () => {
             const playerCount = parseInt(playerCountInput.value);
-            if (playerCount < 2 || playerCount > 6) {
-                alert('Количество игроков должно быть от 2 до 6');
-                return;
-            }
-            
-            const selectedBase = questionBaseSelect.value;
-            if (!selectedBase) {
-                alert('Выберите базу вопросов');
-                return;
-            }
-
             const players = [];
             for (let i = 1; i <= playerCount; i++) {
                 const name = document.getElementById(`player${i}`).value.trim();
-                if (!name) {
-                    alert(`Введите имя для игрока ${i}`);
-                    return;
-                }
-                players.push({
-                    id: i,
-                    name: name,
-                    score: 0
-                });
+                players.push({ id: i, name: name || `Игрок ${i}`, score: 0 });
             }
 
-            // Сохранение состояния игры
             const gameState = {
                 players: players,
                 currentPlayer: 0,
                 currentQuestion: null,
                 answeredQuestions: [],
-                gameStatus: 'playing',
-                questionsFile: selectedBase
+                gameStatus: 'playing'
             };
+            
+            if (useLocalBaseRadio.checked) {
+                const selectedBase = questionBaseSelect.value;
+                if (!selectedBase) {
+                    alert('Пожалуйста, выберите базу вопросов');
+                    return;
+                }
+                gameState.questionsFile = selectedBase;
+            } else {
+                if (!uploadedQuestionsData) {
+                    alert('Пожалуйста, загрузите файл с вопросами');
+                    return;
+                }
+                gameState.uploadedQuestions = uploadedQuestionsData;
+                gameState.questionsFile = 'uploaded';
+            }
 
-            localStorage.setItem('gameState', JSON.stringify(gameState));
-            window.location.href = 'game.html';
+            // Сохраняем состояние
+            try {
+                localStorage.setItem('gameState', JSON.stringify(gameState));
+                console.log('Game state saved:', gameState);
+                window.location.href = 'game.html';
+            } catch (e) {
+                console.error('Ошибка сохранения состояния игры:', e);
+                alert('Ошибка сохранения состояния игры. Проверьте настройки localStorage.');
+            }
         });
     </script>
 </body>

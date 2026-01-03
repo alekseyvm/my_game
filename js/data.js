@@ -22,11 +22,16 @@ async function getAvailableQuestionFiles() {
                 const resp = await fetch(`data/${base.file}`);
                 if (resp.ok) {
                     const data = await resp.json();
-                    fileInfo.push({
-                        name: base.file,
-                        path: `data/${base.file}`,
-                        subject: data.subject || base.name
-                    });
+                    // Проверяем корректность данных
+                    if (isValidQuestionsFormat(data)) {
+                        fileInfo.push({
+                            name: base.file,
+                            path: `data/${base.file}`,
+                            subject: data.subject || base.name
+                        });
+                    } else {
+                        console.warn(`Файл ${base.file} имеет некорректный формат и будет пропущен`);
+                    }
                 }
             } catch (e) {
                 console.warn(`Не удалось загрузить ${base.file}:`, e);
@@ -40,9 +45,20 @@ async function getAvailableQuestionFiles() {
     }
 }
 
-// Загрузка вопросов из указанного JSON файла
-async function loadQuestions(filename = 'data/questions.json') {
+// Загрузка вопросов из указанного JSON файла или из загруженных данных
+async function loadQuestions(filename = 'data/questions.json', gameState = null) {
     try {
+        // Если передан gameState и есть загруженные данные, используем их
+        if (gameState && gameState.uploadedQuestions && gameState.questionsFile === 'uploaded') {
+            const uploadedData = gameState.uploadedQuestions;
+            if (isValidQuestionsFormat(uploadedData)) {
+                console.log('Используем загруженные данные вопросов:', uploadedData.subject || 'Без названия');
+                return uploadedData;
+            } else {
+                console.warn('Загруженные данные имеют некорректный формат, используем данные по умолчанию');
+            }
+        }
+        
         const response = await fetch(filename);
         if (!response.ok) {
             throw new Error(`Не удалось загрузить вопросы из ${filename}`);
@@ -60,6 +76,98 @@ async function loadQuestions(filename = 'data/questions.json') {
         // Возвращаем тестовые данные в случае ошибки
         return getDefaultQuestions();
     }
+}
+
+// Проверка корректности формата данных вопросов (упрощенная версия)
+function isValidQuestionsFormat(data) {
+    if (!data || typeof data !== 'object') {
+        return false;
+    }
+    
+    if (!data.categories || !Array.isArray(data.categories)) {
+        return false;
+    }
+    
+    if (data.categories.length === 0) {
+        return false;
+    }
+    
+    for (let i = 0; i < data.categories.length; i++) {
+        const category = data.categories[i];
+        if (!category.id || !category.name || !category.questions) {
+            return false;
+        }
+        
+        if (!Array.isArray(category.questions) || category.questions.length === 0) {
+            return false;
+        }
+        
+        for (let j = 0; j < category.questions.length; j++) {
+            const question = category.questions[j];
+            if (!question.text || !Array.isArray(question.options) || 
+                typeof question.correctAnswer !== 'number' || typeof question.points !== 'number') {
+                return false;
+            }
+            
+            if (question.options.length < 2) {
+                return false;
+            }
+            
+            if (question.correctAnswer < 0 || question.correctAnswer >= question.options.length) {
+                return false;
+            }
+        }
+    }
+    
+    return true;
+}
+
+// Валидация данных вопросов (дублируем функцию для совместимости)
+function validateQuestionsData(data) {
+    if (!data || typeof data !== 'object') {
+        return false;
+    }
+    
+    if (!data.subject || typeof data.subject !== 'string') {
+        return false;
+    }
+    
+    if (!data.categories || !Array.isArray(data.categories)) {
+        return false;
+    }
+    
+    if (data.categories.length === 0) {
+        return false;
+    }
+    
+    for (let i = 0; i < data.categories.length; i++) {
+        const category = data.categories[i];
+        if (!category.id || !category.name || !category.questions) {
+            return false;
+        }
+        
+        if (!Array.isArray(category.questions) || category.questions.length === 0) {
+            return false;
+        }
+        
+        for (let j = 0; j < category.questions.length; j++) {
+            const question = category.questions[j];
+            if (!question.text || !Array.isArray(question.options) || 
+                typeof question.correctAnswer !== 'number' || typeof question.points !== 'number') {
+                return false;
+            }
+            
+            if (question.options.length < 2) {
+                return false;
+            }
+            
+            if (question.correctAnswer < 0 || question.correctAnswer >= question.options.length) {
+                return false;
+            }
+        }
+    }
+    
+    return true;
 }
 
 // Тестовые данные по умолчанию

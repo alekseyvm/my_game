@@ -7,6 +7,10 @@
     {
       "file": "math1.json",
       "name": "Математика"
+    },
+    {
+      "file": "example_questions.json",
+      "name": "Пример базы вопросов"
     }
   ]
 }

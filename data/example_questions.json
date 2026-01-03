@@ -1,0 +1,86 @@
+{
+  "subject": "Пример загружаемой базы вопросов",
+  "categories": [
+    {
+      "id": 1,
+      "name": "Программирование",
+      "questions": [
+        {
+          "id": 1,
+          "text": "Какой язык программирования был создан Бьёрном Страуструпом?",
+          "options": ["Java", "Python", "C++", "JavaScript"],
+          "correctAnswer": 2,
+          "points": 100
+        },
+        {
+          "id": 2,
+          "text": "Что означает аббревиатура HTML?",
+          "options": ["HyperText Markup Language", "High Tech Modern Language", "Home Tool Markup Language", "Hyperlink and Text Markup Language"],
+          "correctAnswer": 0,
+          "points": 200
+        },
+        {
+          "id": 3,
+          "text": "Какая из этих технологий НЕ является языком программирования?",
+          "options": ["CSS", "Python", "Java", "C#"],
+          "correctAnswer": 0,
+          "points": 300
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Интернет и технологии",
+      "questions": [
+        {
+          "id": 4,
+          "text": "В каком году был создан интернет?",
+          "options": ["1969", "1971", "1983", "1991"],
+          "correctAnswer": 0,
+          "points": 100
+        },
+        {
+          "id": 5,
+          "text": "Что означает аббревиатура HTTP?",
+          "options": ["HyperText Transfer Protocol", "High Transfer Text Protocol", "Hyperlink Transfer Process", "Home Transfer Protocol"],
+          "correctAnswer": 0,
+          "points": 200
+        },
+        {
+          "id": 6,
+          "text": "Какая компания разработала операционную систему Windows?",
+          "options": ["Apple", "Microsoft", "Google", "IBM"],
+          "correctAnswer": 1,
+          "points": 300
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Логика и алгоритмы",
+      "questions": [
+        {
+          "id": 7,
+          "text": "Какая из этих структур данных работает по принципу LIFO?",
+          "options": ["Очередь", "Стек", "Массив", "Связанный список"],
+          "correctAnswer": 1,
+          "points": 100
+        },
+        {
+          "id": 8,
+          "text": "Сколько бит в одном байте?",
+          "options": ["4", "6", "8", "16"],
+          "correctAnswer": 2,
+          "points": 200
+        },
+        {
+          "id": 9,
+          "text": "Какой алгоритм сортировки имеет среднюю сложность O(n log n)?",
+          "options": ["Пузырьковая", "Быстрая сортировка", "Сортировка вставками", "Сортировка выбором"],
+          "correctAnswer": 1,
+          "points": 300
+        }
+      ]
+    }
+  ]
+}

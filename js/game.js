@@ -14,9 +14,9 @@ async function initGame() {
         return;
     }
 
-    // Загрузка вопросов из выбранного файла
+    // Загрузка вопросов из выбранного файла или загруженных данных
     const questionsFile = gameState.questionsFile || 'data/questions.json';
-    questionsData = await loadQuestions(questionsFile);
+    questionsData = await loadQuestions(questionsFile, gameState);
     
     // Отображение наименования предмета в заголовке
     const subjectElement = document.getElementById('gameSubject');

@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест загрузки файлов</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .file-upload-section { margin: 20px 0; padding: 20px; border: 2px dashed #ccc; }
+        .btn { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        .btn-primary { background: #007bff; color: white; border: none; }
+        .btn-secondary { background: #6c757d; color: white; border: none; }
+        .uploaded-file-info { margin-top: 10px; padding: 10px; background: #d4edda; border: 1px solid #c3e6cb; }
+        #fileInput { display: none; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 5px; overflow: auto; }
+    </style>
+</head>
+<body>
+    <h1>Тест загрузки файлов с вопросами</h1>
+    
+    <div class="file-upload-section">
+        <input type="file" id="fileInput" accept=".json">
+        <button type="button" id="uploadFileBtn" class="btn btn-primary">Загрузить файл с вопросами</button>
+        <button type="button" id="clearUploadedBtn" class="btn btn-secondary" style="display: none;">Очистить загруженный файл</button>
+        <div id="uploadedFileInfo"></div>
+    </div>
+    
+    <div id="validationResult"></div>
+    <div id="dataPreview" style="display: none;">
+        <h3>Предварительный просмотр загруженных данных:</h3>
+        <pre id="dataContent"></pre>
+    </div>
+
+    <script>
+        let uploadedQuestionsData = null;
+        let uploadedFileName = '';
+
+        // Валидация формата файла с вопросами
+        function validateQuestionsData(data) {
+            if (!data || typeof data !== 'object') {
+                return { valid: false, error: 'Некорректный формат данных' };
+            }
+            
+            if (!data.categories || !Array.isArray(data.categories)) {
+                return { valid: false, error: 'Отсутствует поле "categories" или оно не является массивом' };
+            }
+            
+            if (data.categories.length === 0) {
+                return { valid: false, error: 'Массив категорий не может быть пустым' };
+            }
+            
+            for (let i = 0; i < data.categories.length; i++) {
+                const category = data.categories[i];
+                if (!category.id || !category.name || !category.questions) {
+                    return { valid: false, error: `Категория ${i + 1}: отсутствуют обязательные поля (id, name, questions)` };
+                }
+                
+                if (!Array.isArray(category.questions) || category.questions.length === 0) {
+                    return { valid: false, error: `Категория ${i + 1}: отсутствуют вопросы или массив пуст` };
+                }
+                
+                for (let j = 0; j < category.questions.length; j++) {
+                    const question = category.questions[j];
+                    if (!question.text || !Array.isArray(question.options) || 
+                        typeof question.correctAnswer !== 'number' || typeof question.points !== 'number') {
+                        return { valid: false, error: `Категория ${i + 1}, вопрос ${j + 1}: отсутствуют обязательные поля (text, options, correctAnswer, points)` };
+                    }
+                    
+                    if (question.options.length < 2) {
+                        return { valid: false, error: `Категория ${i + 1}, вопрос ${j + 1}: должно быть минимум 2 варианта ответа` };
+                    }
+                    
+                    if (question.correctAnswer < 0 || question.correctAnswer >= question.options.length) {
+                        return { valid: false, error: `Категория ${i + 1}, вопрос ${j + 1}: индекс правильного ответа выходит за пределы вариантов` };
+                    }
+                }
+            }
+            
+            return { valid: true };
+        }
+
+        const fileInput = document.getElementById('fileInput');
+        const uploadFileBtn = document.getElementById('uploadFileBtn');
+        const clearUploadedBtn = document.getElementById('clearUploadedBtn');
+        const uploadedFileInfo = document.getElementById('uploadedFileInfo');
+        const validationResult = document.getElementById('validationResult');
+        const dataPreview = document.getElementById('dataPreview');
+        const dataContent = document.getElementById('dataContent');
+
+        // Обработка загрузки файла
+        uploadFileBtn.addEventListener('click', () => {
+            fileInput.click();
+        });
+        
+        // Обработка выбора файла
+        fileInput.addEventListener('change', async (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            if (!file.name.toLowerCase().endsWith('.json')) {
+                alert('Пожалуйста, выберите файл в формате JSON');
+                return;
+            }
+            
+            try {
+                const text = await file.text();
+                const data = JSON.parse(text);
+                
+                const validation = validateQuestionsData(data);
+                if (!validation.valid) {
+                    validationResult.innerHTML = `<div style="color: red; padding: 10px; background: #f8d7da; border: 1px solid #f5c6cb;">❌ Ошибка валидации: ${validation.error}</div>`;
+                    uploadedQuestionsData = null;
+                    uploadedFileName = '';
+                    clearUploadedBtn.style.display = 'none';
+                    uploadedFileInfo.textContent = '';
+                    dataPreview.style.display = 'none';
+                    return;
+                }
+                
+                uploadedQuestionsData = data;
+                uploadedFileName = file.name;
+                
+                // Обновляем интерфейс
+                clearUploadedBtn.style.display = 'inline-block';
+                const subjectName = data.subject || 'Загруженная база';
+                uploadedFileInfo.innerHTML = `<div class="uploaded-file-info">✅ Загружен: ${file.name} (${subjectName})</div>`;
+                
+                validationResult.innerHTML = `<div style="color: green; padding: 10px; background: #d4edda; border: 1px solid #c3e6cb;">✅ Файл успешно загружен и валидирован!</div>`;
+                
+                // Показываем предварительный просмотр
+                dataContent.textContent = JSON.stringify(data, null, 2);
+                dataPreview.style.display = 'block';
+                
+            } catch (error) {
+                console.error('Ошибка загрузки файла:', error);
+                validationResult.innerHTML = `<div style="color: red; padding: 10px; background: #f8d7da; border: 1px solid #f5c6cb;">❌ Ошибка при чтении файла: ${error.message}</div>`;
+                uploadedQuestionsData = null;
+                uploadedFileName = '';
+                clearUploadedBtn.style.display = 'none';
+                uploadedFileInfo.textContent = '';
+                dataPreview.style.display = 'none';
+            }
+        });
+        
+        // Очистка загруженного файла
+        clearUploadedBtn.addEventListener('click', () => {
+            uploadedQuestionsData = null;
+            uploadedFileName = '';
+            fileInput.value = '';
+            clearUploadedBtn.style.display = 'none';
+            uploadedFileInfo.textContent = '';
+            validationResult.innerHTML = '';
+            dataPreview.style.display = 'none';
+        });
+    </script>
+</body>
+</html>
