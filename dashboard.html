@@ -52,6 +52,19 @@
         </div>
     </main>
 
+    <!-- Модальное окно подтверждения новой игры -->
+    <div id="newGameModal" class="modal">
+        <div class="modal-content">
+            <h2>Новая игра</h2>
+            <p class="modal-question">Хотите начать новую игру?</p>
+            <p class="modal-warning">Текущий прогресс будет потерян.</p>
+            <div class="modal-actions">
+                <button id="cancelNewGame" class="btn btn-secondary">Нет, отмена</button>
+                <button id="confirmNewGame" class="btn btn-primary">Да, начать</button>
+            </div>
+        </div>
+    </div>
+
     <footer>
         <p>Разработано для образовательных целей | 2025</p>
     </footer>
@@ -121,9 +134,22 @@
         });
 
         document.getElementById('newGame').addEventListener('click', () => {
-            if (confirm('Начать новую игру? Текущий прогресс будет потерян.')) {
-                localStorage.removeItem('gameState');
-                window.location.href = 'index.html';
+            document.getElementById('newGameModal').classList.add('active');
+        });
+
+        document.getElementById('confirmNewGame').addEventListener('click', () => {
+            localStorage.removeItem('gameState');
+            window.location.href = 'index.html';
+        });
+
+        document.getElementById('cancelNewGame').addEventListener('click', () => {
+            document.getElementById('newGameModal').classList.remove('active');
+        });
+
+        // Закрытие модального окна при клике вне его
+        document.getElementById('newGameModal').addEventListener('click', (e) => {
+            if (e.target.id === 'newGameModal') {
+                document.getElementById('newGameModal').classList.remove('active');
             }
         });
     </script>

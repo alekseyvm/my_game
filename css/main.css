@@ -298,7 +298,7 @@ footer p {
     background-color: var(--primary-color);
     color: white;
     width: 100%;
-    margin-top: 0.75rem;
+    /* margin-top: 0.75rem; */
 }
 
 .btn-primary:hover {
