@@ -1,13 +1,59 @@
 // Модуль для работы с данными
 
-// Загрузка вопросов из JSON файла
-async function loadQuestions() {
+// Получение списка доступных файлов вопросов из папки data
+async function getAvailableQuestionFiles() {
     try {
+        // В браузере без сервера мы не можем напрямую сканировать папки,
+        // поэтому используем предопределенный список файлов
         const response = await fetch('data/questions.json');
         if (!response.ok) {
             throw new Error('Не удалось загрузить вопросы');
         }
+        
+        // Загружаем каждый файл для получения информации о предмете
+        const files = [
+            { name: 'questions.json', path: 'data/questions.json' },
+            { name: 'math1.json', path: 'data/math1.json' }
+        ];
+        
+        const fileInfo = [];
+        for (const file of files) {
+            try {
+                const resp = await fetch(file.path);
+                if (resp.ok) {
+                    const data = await resp.json();
+                    fileInfo.push({
+                        name: file.name,
+                        path: file.path,
+                        subject: data.subject || file.name.replace('.json', '')
+                    });
+                }
+            } catch (e) {
+                console.warn(`Не удалось загрузить ${file.name}:`, e);
+            }
+        }
+        
+        return fileInfo;
+    } catch (error) {
+        console.error('Ошибка получения списка файлов вопросов:', error);
+        return [];
+    }
+}
+
+// Загрузка вопросов из указанного JSON файла
+async function loadQuestions(filename = 'data/questions.json') {
+    try {
+        const response = await fetch(filename);
+        if (!response.ok) {
+            throw new Error(`Не удалось загрузить вопросы из ${filename}`);
+        }
         const data = await response.json();
+        
+        // Проверяем наличие обязательных полей
+        if (!data.categories || !Array.isArray(data.categories)) {
+            throw new Error('Некорректный формат данных вопросов');
+        }
+        
         return data;
     } catch (error) {
         console.error('Ошибка загрузки вопросов:', error);
@@ -19,6 +65,7 @@ async function loadQuestions() {
 // Тестовые данные по умолчанию
 function getDefaultQuestions() {
     return {
+        subject: "Общие вопросы",
         categories: [
             {
                 id: 1,

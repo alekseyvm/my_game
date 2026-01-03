@@ -70,6 +70,19 @@ header {
     color: var(--primary-color);
 }
 
+/* Отображение предмета в игре */
+.game-subject {
+    display: none;
+    background: linear-gradient(135deg, var(--primary-color), #3b82f6);
+    color: white;
+    padding: 0.5rem 1.5rem;
+    border-radius: 25px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-left: 1.5rem;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+}
+
 .organization {
     display: none;
 }
@@ -139,6 +152,23 @@ footer p {
 }
 
 .form-group input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+/* Стили для выбора базы вопросов */
+.question-base-select {
+    width: 100%;
+    padding: 0.6rem;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 0.95rem;
+    transition: border-color 0.3s;
+    background-color: white;
+    cursor: pointer;
+}
+
+.question-base-select:focus {
     outline: none;
     border-color: var(--primary-color);
 }

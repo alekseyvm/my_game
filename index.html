@@ -21,6 +21,13 @@
             <h2>Настройка игры</h2>
             
             <div class="form-group">
+                <label for="questionBase">База вопросов:</label>
+                <select id="questionBase" class="question-base-select">
+                    <option value="" disabled selected>Загрузка...</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
                 <label for="playerCount">Количество игроков (2-6):</label>
                 <input type="number" id="playerCount" min="2" max="6" value="2">
             </div>
@@ -42,7 +49,32 @@
         const playerCountInput = document.getElementById('playerCount');
         const playerNamesContainer = document.getElementById('playerNames');
         const startGameButton = document.getElementById('startGame');
-
+        const questionBaseSelect = document.getElementById('questionBase');
+        
+        // Загрузка доступных баз вопросов
+        async function loadQuestionBases() {
+            const files = await getAvailableQuestionFiles();
+            questionBaseSelect.innerHTML = '';
+            
+            if (files.length === 0) {
+                const option = document.createElement('option');
+                option.value = '';
+                option.textContent = 'Базы вопросов не найдены';
+                questionBaseSelect.appendChild(option);
+                startGameButton.disabled = true;
+                return;
+            }
+            
+            files.forEach(file => {
+                const option = document.createElement('option');
+                option.value = file.path;
+                option.textContent = file.subject;
+                questionBaseSelect.appendChild(option);
+            });
+            
+            startGameButton.disabled = false;
+        }
+        
         // Генерация полей для имен игроков
         function generatePlayerInputs(count) {
             playerNamesContainer.innerHTML = '';
@@ -59,6 +91,7 @@
 
         // Инициализация
         generatePlayerInputs(2);
+        loadQuestionBases();
 
         // Обработчик изменения количества игроков
         playerCountInput.addEventListener('change', (e) => {
@@ -73,6 +106,12 @@
             const playerCount = parseInt(playerCountInput.value);
             if (playerCount < 2 || playerCount > 6) {
                 alert('Количество игроков должно быть от 2 до 6');
+                return;
+            }
+            
+            const selectedBase = questionBaseSelect.value;
+            if (!selectedBase) {
+                alert('Выберите базу вопросов');
                 return;
             }
 
@@ -96,7 +135,8 @@
                 currentPlayer: 0,
                 currentQuestion: null,
                 answeredQuestions: [],
-                gameStatus: 'playing'
+                gameStatus: 'playing',
+                questionsFile: selectedBase
             };
 
             localStorage.setItem('gameState', JSON.stringify(gameState));

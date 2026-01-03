@@ -14,8 +14,16 @@ async function initGame() {
         return;
     }
 
-    // Загрузка вопросов
-    questionsData = await loadQuestions();
+    // Загрузка вопросов из выбранного файла
+    const questionsFile = gameState.questionsFile || 'data/questions.json';
+    questionsData = await loadQuestions(questionsFile);
+    
+    // Отображение наименования предмета в заголовке
+    const subjectElement = document.getElementById('gameSubject');
+    if (subjectElement && questionsData.subject) {
+        subjectElement.textContent = questionsData.subject;
+        subjectElement.style.display = 'block';
+    }
     
     // Отображение интерфейса
     renderPlayers();
@@ -87,6 +95,14 @@ function showQuestion(category, question) {
     const questionImage = document.getElementById('questionImage');
     const questionText = document.getElementById('questionText');
     const questionOptions = document.getElementById('questionOptions');
+    const resultElement = document.getElementById('answerResult');
+    const closeButton = document.getElementById('closeModal');
+    
+    // Сбрасываем состояние перед показом нового вопроса
+    resultElement.textContent = '';
+    resultElement.className = 'answer-result';
+    closeButton.style.display = 'inline-block';
+    closeButton.textContent = 'Закрыть';
     
     // Заполнение данных
     questionCategory.textContent = category.name;
@@ -116,7 +132,6 @@ function showQuestion(category, question) {
     modal.classList.add('active');
     
     // Обработчик закрытия
-    const closeButton = document.getElementById('closeModal');
     closeButton.onclick = () => {
         modal.classList.remove('active');
     };
@@ -124,13 +139,19 @@ function showQuestion(category, question) {
 
 // Обработка ответа
 function handleAnswer(question, selectedIndex, selectedButton) {
+    const modal = document.getElementById('questionModal');
     const questionOptions = document.getElementById('questionOptions');
     const allButtons = questionOptions.querySelectorAll('.option-button');
+    const resultElement = document.getElementById('answerResult');
+    const closeButton = document.getElementById('closeModal');
     
-    // Отключаем все кнопки
+    // Отключаем все кнопки вариантов ответов
     allButtons.forEach(btn => {
         btn.style.pointerEvents = 'none';
     });
+    
+    // Скрываем кнопку закрытия во время показа результата
+    closeButton.style.display = 'none';
     
     // Показываем правильный ответ
     allButtons[question.correctAnswer].classList.add('correct');
@@ -141,16 +162,16 @@ function handleAnswer(question, selectedIndex, selectedButton) {
         selectedButton.classList.add('correct');
         updatePlayerScore(gameState, currentPlayer.id, question.points);
         
-        setTimeout(() => {
-            alert(`Правильно! +${question.points} баллов для ${currentPlayer.name}`);
-        }, 300);
+        // Показываем результат в модальном окне
+        resultElement.textContent = `✓ Правильно! +${question.points} баллов для ${currentPlayer.name}`;
+        resultElement.className = 'answer-result correct';
     } else {
         selectedButton.classList.add('incorrect');
         updatePlayerScore(gameState, currentPlayer.id, -question.points);
         
-        setTimeout(() => {
-            alert(`Неправильно! -${question.points} баллов для ${currentPlayer.name}`);
-        }, 300);
+        // Показываем результат в модальном окне
+        resultElement.textContent = `✗ Неправильно! -${question.points} баллов для ${currentPlayer.name}`;
+        resultElement.className = 'answer-result incorrect';
     }
     
     // Отмечаем вопрос как отвеченный
@@ -162,12 +183,19 @@ function handleAnswer(question, selectedIndex, selectedButton) {
     // Сохранение состояния
     saveGameState(gameState);
     
-    // Обновление интерфейса через 2 секунды
+    // Обновляем игровое поле
+    renderPlayers();
+    renderGameBoard();
+    
+    // Показываем кнопку закрытия через небольшую паузу
     setTimeout(() => {
-        document.getElementById('questionModal').classList.remove('active');
-        renderPlayers();
-        renderGameBoard();
-        
+        closeButton.style.display = 'inline-block';
+        closeButton.textContent = 'Продолжить';
+    }, 1000);
+    
+    // Обновляем обработчик кнопки закрытия
+    closeButton.onclick = () => {
+        modal.classList.remove('active');
         // Проверка завершения игры
         const totalQuestions = questionsData.categories.reduce((sum, cat) => sum + cat.questions.length, 0);
         if (isGameFinished(gameState, totalQuestions)) {
@@ -177,7 +205,7 @@ function handleAnswer(question, selectedIndex, selectedButton) {
                 }
             }, 500);
         }
-    }, 2000);
+    };
 }
 
 // Запуск игры при загрузке страницы
