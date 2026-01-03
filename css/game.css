@@ -234,6 +234,26 @@
     border: 2px solid #ef4444;
 }
 
+/* Модальное окно завершения игры */
+#gameCompleteModal h2 {
+    text-align: center;
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+}
+
+#gameCompleteModal p {
+    text-align: center;
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+}
+
+.game-complete-text {
+    font-weight: 600;
+    font-size: 1.2rem !important;
+    margin-top: 1rem !important;
+}
+
 .modal-actions {
     display: flex;
     justify-content: center;

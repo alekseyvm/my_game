@@ -1,35 +1,35 @@
 // Модуль для работы с данными
 
-// Получение списка доступных файлов вопросов из папки data
+// Получение списка доступных файлов вопросов из questions.json
 async function getAvailableQuestionFiles() {
     try {
-        // В браузере без сервера мы не можем напрямую сканировать папки,
-        // поэтому используем предопределенный список файлов
+        // Загружаем файл конфигурации с списком баз вопросов
         const response = await fetch('data/questions.json');
         if (!response.ok) {
-            throw new Error('Не удалось загрузить вопросы');
+            throw new Error('Не удалось загрузить конфигурацию вопросов');
+        }
+        
+        const config = await response.json();
+        
+        if (!config.bases || !Array.isArray(config.bases)) {
+            throw new Error('Некорректный формат конфигурации вопросов');
         }
         
         // Загружаем каждый файл для получения информации о предмете
-        const files = [
-            { name: 'questions.json', path: 'data/questions.json' },
-            { name: 'math1.json', path: 'data/math1.json' }
-        ];
-        
         const fileInfo = [];
-        for (const file of files) {
+        for (const base of config.bases) {
             try {
-                const resp = await fetch(file.path);
+                const resp = await fetch(`data/${base.file}`);
                 if (resp.ok) {
                     const data = await resp.json();
                     fileInfo.push({
-                        name: file.name,
-                        path: file.path,
-                        subject: data.subject || file.name.replace('.json', '')
+                        name: base.file,
+                        path: `data/${base.file}`,
+                        subject: data.subject || base.name
                     });
                 }
             } catch (e) {
-                console.warn(`Не удалось загрузить ${file.name}:`, e);
+                console.warn(`Не удалось загрузить ${base.file}:`, e);
             }
         }
         
