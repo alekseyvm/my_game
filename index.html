@@ -56,15 +56,34 @@
         .uploaded-file-info {
             margin-top: 10px;
             padding: 10px;
-            background: #dcfce7;
-            border: 1px solid #bbf7d0;
             border-radius: 6px;
-            color: #166534;
             font-weight: bold;
             display: none;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start;
             gap: 8px;
+            text-align: left;
+            width: 100%;
+        }
+
+        .uploaded-file-info.success {
+            background-color: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: #166534;
+        }
+
+        .uploaded-file-info.error {
+            background-color: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #dc2626;
+        }
+
+        .uploaded-file-info.success::before {
+            content: "✅";
+        }
+
+        .uploaded-file-info.error::before {
+            content: "❌";
         }
     </style>
 </head>
@@ -168,7 +187,25 @@
             fileInput.value = '';
             clearUploadedBtn.style.display = 'none';
             uploadedFileInfo.style.display = 'none';
+            uploadedFileInfo.className = 'uploaded-file-info';
             uploadedFileInfo.textContent = '';
+        }
+        
+        function showFileError(message) {
+            uploadedFileInfo.style.display = 'flex';
+            uploadedFileInfo.className = 'uploaded-file-info error';
+            uploadedFileInfo.innerHTML = message;
+            uploadedQuestionsData = null;
+            uploadedFileName = '';
+            clearUploadedBtn.style.display = 'inline-block';
+            validateForm();
+        }
+        
+        function showFileSuccess(fileName, subject) {
+            uploadedFileInfo.style.display = 'flex';
+            uploadedFileInfo.className = 'uploaded-file-info success';
+            uploadedFileInfo.innerHTML = ` ${fileName} (${subject || 'Загруженная база'})`;
+            clearUploadedBtn.style.display = 'inline-block';
         }
         
         function validateForm() {
@@ -182,13 +219,73 @@
             startGameButton.disabled = !isValid;
         }
 
+        // Детальная валидация структуры файла вопросов
+        function validateQuestionsFile(data) {
+            const errors = [];
+            
+            if (!data || typeof data !== 'object') {
+                return { valid: false, error: 'Некорректный формат данных: ожидается JSON объект' };
+            }
+            
+            if (!data.categories || !Array.isArray(data.categories)) {
+                return { valid: false, error: 'Отсутствует поле "categories" или оно не является массивом' };
+            }
+            
+            if (data.categories.length === 0) {
+                return { valid: false, error: 'Массив категорий не может быть пустым' };
+            }
+            
+            for (let i = 0; i < data.categories.length; i++) {
+                const category = data.categories[i];
+                const catNum = i + 1;
+                
+                if (!category.id) {
+                    errors.push(`Категория ${catNum}: отсутствует поле "id"`);
+                }
+                if (!category.name || typeof category.name !== 'string') {
+                    errors.push(`Категория ${catNum}: отсутствует или некорректно поле "name"`);
+                }
+                if (!category.questions || !Array.isArray(category.questions)) {
+                    errors.push(`Категория ${catNum}: отсутствует или некорректно поле "questions"`);
+                } else if (category.questions.length === 0) {
+                    errors.push(`Категория ${catNum}: массив вопросов не может быть пустым`);
+                } else {
+                    for (let j = 0; j < category.questions.length; j++) {
+                        const question = category.questions[j];
+                        const qNum = j + 1;
+                        
+                        if (!question.text || typeof question.text !== 'string') {
+                            errors.push(`Категория ${catNum}, вопрос ${qNum}: отсутствует или некорректно поле "text"`);
+                        }
+                        if (!question.options || !Array.isArray(question.options)) {
+                            errors.push(`Категория ${catNum}, вопрос ${qNum}: отсутствует или некорректно поле "options"`);
+                        } else if (question.options.length < 2) {
+                            errors.push(`Категория ${catNum}, вопрос ${qNum}: должно быть минимум 2 варианта ответа`);
+                        }
+                        if (typeof question.correctAnswer !== 'number') {
+                            errors.push(`Категория ${catNum}, вопрос ${qNum}: отсутствует или некорректно поле "correctAnswer"`);
+                        } else if (question.correctAnswer < 0 || question.options && question.correctAnswer >= question.options.length) {
+                            errors.push(`Категория ${catNum}, вопрос ${qNum}: индекс правильного ответа выходит за пределы вариантов`);
+                        }
+                        if (typeof question.points !== 'number' || question.points <= 0) {
+                            errors.push(`Категория ${catNum}, вопрос ${qNum}: поле "points" должно быть положительным числом`);
+                        }
+                    }
+                }
+            }
+            
+            if (errors.length > 0) {
+                return { valid: false, error: errors[0] + (errors.length > 1 ? ` (и еще ${errors.length - 1} ошибок)` : '') };
+            }
+            
+            return { valid: true };
+        }
+
         // Загрузка баз вопросов - улучшенная версия с обработкой ошибок
         async function loadQuestionBases() {
             try {
-                // Сначала пробуем получить список файлов через стандартную функцию
                 let files = await getAvailableQuestionFiles();
                 
-                // Если стандартный способ не сработал (пустой массив), пробуем напрямую
                 if (!files || files.length === 0) {
                     try {
                         const response = await fetch('data/questions.json');
@@ -204,10 +301,9 @@
                         }
                     } catch (e) {
                         console.warn('Не удалось загрузить questions.json:', e);
-                        // Используем резервный список на основе структуры проекта
                         files = [
-                            // { name: 'history1.json', path: 'data/history1.json', subject: 'История' },
-                            // { name: 'math1.json', path: 'data/math1.json', subject: 'Математика' }
+                            { name: 'history1.json', path: 'data/history1.json', subject: 'История' },
+                            { name: 'math1.json', path: 'data/math1.json', subject: 'Математика' }
                         ];
                     }
                 }
@@ -245,25 +341,22 @@
                 const text = await file.text();
                 const data = JSON.parse(text);
                 
-                // Валидация структуры загруженного файла
-                if (!data.categories || !Array.isArray(data.categories) || data.categories.length === 0) {
-                    alert('Некорректный формат файла вопросов. Отсутствуют категории.');
-                    clearUploadedFile();
+                // Детальная валидация загруженного файла
+                const validation = validateQuestionsFile(data);
+                
+                if (!validation.valid) {
+                    showFileError(`Ошибка валидации: ${validation.error}.<br><br>Загрузите другой файл или выберите базу вопросов из списка.`);
                     return;
                 }
                 
                 uploadedQuestionsData = data;
                 uploadedFileName = file.name;
                 
-                clearUploadedBtn.style.display = 'inline-block';
-                uploadedFileInfo.style.display = 'flex';
-                uploadedFileInfo.textContent = `✅ ${file.name} (${data.subject || 'Загруженная база'})`;
-                
+                showFileSuccess(file.name, data.subject);
                 validateForm();
             } catch (error) {
                 console.error('Ошибка загрузки файла:', error);
-                alert('Ошибка при чтении JSON файла. Убедитесь, что файл содержит корректный JSON.');
-                clearUploadedFile();
+                showFileError('Ошибка при чтении файла: некорректный JSON формат');
             }
         });
         
@@ -326,14 +419,13 @@
                 gameState.questionsFile = selectedBase;
             } else {
                 if (!uploadedQuestionsData) {
-                    alert('Пожалуйста, загрузите файл с вопросами');
+                    alert('Пожалуйста, загрузите корректный файл с вопросами');
                     return;
                 }
                 gameState.uploadedQuestions = uploadedQuestionsData;
                 gameState.questionsFile = 'uploaded';
             }
 
-            // Сохраняем состояние
             try {
                 localStorage.setItem('gameState', JSON.stringify(gameState));
                 console.log('Game state saved:', gameState);
