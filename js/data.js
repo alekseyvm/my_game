@@ -122,53 +122,7 @@ function isValidQuestionsFormat(data) {
     return true;
 }
 
-// Валидация данных вопросов (дублируем функцию для совместимости)
-function validateQuestionsData(data) {
-    if (!data || typeof data !== 'object') {
-        return false;
-    }
-    
-    if (!data.subject || typeof data.subject !== 'string') {
-        return false;
-    }
-    
-    if (!data.categories || !Array.isArray(data.categories)) {
-        return false;
-    }
-    
-    if (data.categories.length === 0) {
-        return false;
-    }
-    
-    for (let i = 0; i < data.categories.length; i++) {
-        const category = data.categories[i];
-        if (!category.id || !category.name || !category.questions) {
-            return false;
-        }
-        
-        if (!Array.isArray(category.questions) || category.questions.length === 0) {
-            return false;
-        }
-        
-        for (let j = 0; j < category.questions.length; j++) {
-            const question = category.questions[j];
-            if (!question.text || !Array.isArray(question.options) || 
-                typeof question.correctAnswer !== 'number' || typeof question.points !== 'number') {
-                return false;
-            }
-            
-            if (question.options.length < 2) {
-                return false;
-            }
-            
-            if (question.correctAnswer < 0 || question.correctAnswer >= question.options.length) {
-                return false;
-            }
-        }
-    }
-    
-    return true;
-}
+
 
 // Тестовые данные по умолчанию
 function getDefaultQuestions() {
